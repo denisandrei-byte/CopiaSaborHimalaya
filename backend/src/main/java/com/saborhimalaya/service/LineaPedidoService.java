@@ -1,0 +1,55 @@
+package com.saborhimalaya.service;
+
+import java.math.BigDecimal;
+
+import org.springframework.stereotype.Service;
+
+import com.saborhimalaya.dto.MenuPedido;
+import com.saborhimalaya.dto.PlatoPedido;
+import com.saborhimalaya.entity.LineaPedido;
+import com.saborhimalaya.entity.Menu;
+import com.saborhimalaya.entity.Pedido;
+import com.saborhimalaya.entity.Plato;
+import com.saborhimalaya.exception.MenuNoConfiguradoException;
+import com.saborhimalaya.exception.PlatoNoEncontradoException;
+import com.saborhimalaya.repository.LineaPedidoRepository;
+import com.saborhimalaya.repository.MenuRepository;
+import com.saborhimalaya.repository.PlatoRepository;
+
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class LineaPedidoService {
+        private final PlatoRepository platoRepository;
+        private final LineaPedidoRepository repository;
+        private final MenuRepository menuRepository;
+        private final EleccionMenuService opcionMenuService;
+
+        public void AnadirLineaPedidoMenu(MenuPedido menu, Pedido pedido) {
+                BigDecimal importe = new BigDecimal(0);
+                Menu menuOr;
+                LineaPedido nuevaLineaPedido = new LineaPedido(pedido, null,
+                                menuOr = menuRepository.findById(menu.getIdMenu())
+                                                .orElseThrow(() -> new MenuNoConfiguradoException()),
+                                menu.getCantidad(),
+                                importe.add(menuOr.getPrecio().multiply(BigDecimal.valueOf(menu.getCantidad()))));
+                LineaPedido lineaPedidoCreada = repository.save(nuevaLineaPedido);
+                opcionMenuService.AnadirOpcionesMenu(lineaPedidoCreada, menu);
+        }
+
+        public void AnadirLineaPedidoPlato(PlatoPedido platoPedido, Pedido pedido) {
+                BigDecimal importe = new BigDecimal(0);
+                Plato platoOr;
+                LineaPedido nuevaLineaPedido = new LineaPedido(pedido,
+                                platoOr = platoRepository.findById(platoPedido.getIdPlato())
+                                                .orElseThrow(() -> new PlatoNoEncontradoException(
+                                                                platoPedido.getIdPlato())),
+                                null,
+                                platoPedido.getCantidad(),
+                                importe.add(platoOr.getPrecio()
+                                                .multiply(BigDecimal.valueOf(platoPedido.getCantidad()))));
+                repository.save(nuevaLineaPedido);
+
+        }
+}
