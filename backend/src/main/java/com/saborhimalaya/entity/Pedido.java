@@ -3,6 +3,8 @@ package com.saborhimalaya.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,17 +14,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "pedido")
 @Data
 @NoArgsConstructor
-@RequiredArgsConstructor
 public class Pedido {
 
     public static final String EN_PREPARACION = "En preparación";
@@ -34,19 +32,26 @@ public class Pedido {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
-    @NonNull
+    @NotNull
     private Usuario usuario;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    @NonNull
+    @NotNull
     private BigDecimal importeTotal;
 
     @Column(nullable = false)
-    @NonNull
+    @NotBlank
     private String estado;
 
     @Column(nullable = false)
-    @NonNull
+    @NotNull
     private LocalDateTime fechaHoraCreacion;
+
+    public Pedido(Usuario usuario, BigDecimal importeTotal, String estado, LocalDateTime fechaHoraCreacion) {
+        this.usuario = usuario;
+        this.importeTotal = importeTotal;
+        this.estado = estado;
+        this.fechaHoraCreacion = fechaHoraCreacion;
+    }
 
 }

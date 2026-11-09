@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "eleccion_menu")
@@ -20,13 +22,16 @@ public class EleccionMenu {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_linea", nullable = false)
+    @NotNull
     private LineaPedido lineaPedido;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_plato", nullable = false)
+    @NotNull
     private Plato plato;
 
     @Column(nullable = false)
+    @NotBlank
     private String tipo;
 
     protected EleccionMenu() {

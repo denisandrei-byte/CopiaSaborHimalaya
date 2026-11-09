@@ -67,3 +67,27 @@ export async function configurarMenu(datos: ConfigurarMenuRequest): Promise<void
     throw new ErrorApi(respuesta.status, 'No se pudo guardar el menú', await leerDetalle(respuesta))
   }
 }
+
+
+// Menú del día configurado para hoy, con las opciones entre las que elegir.
+// Endpoint: GET /api/menus/hoy (contrato: docs/contratos/menus.md)
+export interface MenuDelDia {
+  idMenu: number
+  fecha: string
+  precio: number
+  entrantes: Plato[]
+  principales: Plato[]
+  postres: Plato[]
+}
+
+// Devuelve null si hoy no hay menú configurado (404)
+export async function obtenerMenuDelDia(): Promise<MenuDelDia | null> {
+  const respuesta = await fetch('/api/menus/hoy')
+  if (respuesta.status === 404) {
+    return null
+  }
+  if (!respuesta.ok) {
+    throw new ErrorApi(respuesta.status, 'No se pudo cargar el menú del día', await leerDetalle(respuesta))
+  }
+  return respuesta.json()
+}

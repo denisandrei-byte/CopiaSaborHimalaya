@@ -1,8 +1,10 @@
 package com.saborhimalaya.dto;
 
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NonNull;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 /**
  * PlatoPedido
@@ -11,8 +13,9 @@ import lombok.NonNull;
 @AllArgsConstructor
 public class PlatoPedido {
 
-    @NonNull
+    @NotNull
     private Long idPlato;
-    @NonNull
+    @NotNull
+    @Positive(message = "Cantidad debe ser positiva")
     private Integer cantidad;
 }

@@ -33,4 +33,9 @@ public class GestorErrores {
     public ProblemDetail pedidoNoEncontrado(UsuarioNoExisteException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
+
+    @ExceptionHandler(PedidoInvalidoException.class)
+    public ProblemDetail pedidoInvalido(PedidoInvalidoException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
 }

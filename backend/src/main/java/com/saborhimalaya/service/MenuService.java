@@ -67,7 +67,8 @@ public class MenuService {
 
         if (menu.getIdMenu() != null) {
             opcionMenuRepository.deleteByMenu(menu);
-            // Hibernate ejecuta los INSERT antes que los DELETE; sin el flush, las opciones nuevas
+            // Hibernate ejecuta los INSERT antes que los DELETE; sin el flush, las opciones
+            // nuevas
             // chocarían con las antiguas en las restricciones únicas de opcion_menu
             opcionMenuRepository.flush();
         }
@@ -83,7 +84,8 @@ public class MenuService {
         return menu;
     }
 
-    // US13: platos del restaurante (en la carta o fuera de ella) que se pueden elegir para el menú.
+    // US13: platos del restaurante (en la carta o fuera de ella) que se pueden
+    // elegir para el menú.
     // tipoOpcion y origen son opcionales; si se omiten no se filtra por ellos.
     @Transactional(readOnly = true)
     public List<PlatoDto> listarPlatosParaMenu(String tipoOpcion, String origen) {
@@ -115,14 +117,16 @@ public class MenuService {
             Plato plato = platoRepository.findById(idPlato)
                     .orElseThrow(() -> new PlatoNoEncontradoException(idPlato));
             if (!admiteCategoria(tipoOpcion, plato.getCategoria())) {
-                throw new DatosMenuNoValidosException("El plato " + plato.getNombre() + " (" + plato.getCategoria().getNombre()
-                        + ") no se puede elegir como " + tipoOpcion.getNombre().toLowerCase(Locale.ROOT));
+                throw new DatosMenuNoValidosException(
+                        "El plato " + plato.getNombre() + " (" + plato.getCategoria().getNombre()
+                                + ") no se puede elegir como " + tipoOpcion.getNombre().toLowerCase(Locale.ROOT));
             }
             opcionMenuRepository.save(new OpcionMenu(menu, plato, tipoOpcion, i + 1));
         }
     }
 
-    // CA12.1-CA12.4: el menú solo queda configurado si está completo, aunque no se llame desde el controlador
+    // CA12.1-CA12.4: el menú solo queda configurado si está completo, aunque no se
+    // llame desde el controlador
     private static void comprobarMenuCompleto(ConfigurarMenuRequest request) {
         if (request.getFecha() == null) {
             throw new DatosMenuNoValidosException("Falta la fecha del menú");

@@ -25,10 +25,12 @@ public class PlatoService {
     }
 
     public PlatoDto anadirPlatoALaCarta(CrearPlatoRequest request) {
-        Plato plato = new Plato(request.getNombre(), request.getDescripcion(), request.getPrecio(), request.getCategoria(), true);
+        Plato plato = new Plato(request.getNombre(), request.getDescripcion(), request.getPrecio(),
+                request.getCategoria(), true);
         return PlatoDto.desde(platoRepository.save(plato));
     }
-    public Plato anadirPlato(Plato plato){
+
+    public Plato anadirPlato(Plato plato) {
         return platoRepository.save(plato);
     }
 }

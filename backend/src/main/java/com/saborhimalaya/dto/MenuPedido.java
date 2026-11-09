@@ -1,8 +1,13 @@
 package com.saborhimalaya.dto;
 
+import java.time.LocalDateTime;
+
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NonNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 /**
  * MenuPedido
@@ -10,10 +15,12 @@ import lombok.NonNull;
 @Data
 @AllArgsConstructor
 public class MenuPedido {
-    @NonNull
-    private Long idMenu;
-    @NonNull
+    @NotNull
+    private LocalDateTime fechaMenu;
+    @NotNull
+    @Valid
     private EleccionesMenu elecciones;
-    @NonNull
+    @NotNull
+    @Positive(message = "Cantidad debe ser positiva")
     private Integer cantidad;
 }

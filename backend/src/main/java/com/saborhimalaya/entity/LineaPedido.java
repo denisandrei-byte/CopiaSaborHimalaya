@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name = "linea_pedido")
@@ -22,6 +24,8 @@ public class LineaPedido {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_pedido", nullable = false)
+    @NotNull
+    @Valid
     private Pedido pedido;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,9 +37,12 @@ public class LineaPedido {
     private Menu menu;
 
     @Column(nullable = false)
+    @NotNull
     private Integer cantidad;
 
-    @Column(name = "precio_unitario",nullable = false, precision = 10, scale = 2)//name para el nombre de la base de datos
+    @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2) // name para el nombre de la base de
+                                                                                   // datos
+    @NotNull
     private BigDecimal precioUnitario;
 
     protected LineaPedido() {

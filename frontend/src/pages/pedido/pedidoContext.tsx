@@ -1,4 +1,4 @@
-// Estado del pedido en curso, compartido entre ConfigurarPedido y ConfirmarPedido.
+// Estado del pedido en curso, compartido entre la carta, ConfigurarPedido y ConfirmarPedido.
 // Nada se envía al backend hasta que el usuario pulsa "Confirmar pedido".
 
 import {
@@ -8,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { Plato } from "../../api/menus.ts";
 import type { EleccionesMenu, PedidoRequest } from "../../api/pedidos";
-import { PRECIO_MENU } from "./catalogo";
 
 export interface LineaPlato {
   idPlato: number;
@@ -21,9 +21,9 @@ export interface LineaPlato {
 export interface LineaMenu {
   idLocal: number; // identifica la línea en pantalla (dos menús con elecciones distintas = dos líneas)
   idMenu: number;
-  nombre: string;
   precio: number;
   elecciones: EleccionesMenu;
+  detalle: string[]; // nombres de los 4 platos elegidos, en orden, solo para mostrarlos
   cantidad: number;
 }
 
@@ -32,10 +32,11 @@ interface PedidoContexto {
   menus: LineaMenu[];
   numElementos: number;
   total: number;
-  anadirPlato: (p: { id: number; nombre: string; precio: number }) => void;
+  anadirPlato: (plato: Pick<Plato, "idPlato" | "nombre" | "precio">) => void;
   anadirMenu: (
-    m: { id: number; nombre: string; precio?: number },
+    menu: { idMenu: number; precio: number },
     elecciones: EleccionesMenu,
+    detalle: string[],
   ) => void;
   cambiarCantidadPlato: (idPlato: number, delta: number) => void;
   cambiarCantidadMenu: (idLocal: number, delta: number) => void;
@@ -50,27 +51,38 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
   const [menus, setMenus] = useState<LineaMenu[]>([]);
   const siguienteId = useRef(1);
 
-  const anadirPlato: PedidoContexto["anadirPlato"] = (p) =>
+  const anadirPlato: PedidoContexto["anadirPlato"] = (plato) =>
     setPlatos((prev) =>
-      prev.some((l) => l.idPlato === p.id)
+      prev.some((l) => l.idPlato === plato.idPlato)
         ? prev.map((l) =>
-            l.idPlato === p.id ? { ...l, cantidad: l.cantidad + 1 } : l,
+            l.idPlato === plato.idPlato
+              ? { ...l, cantidad: l.cantidad + 1 }
+              : l,
           )
         : [
             ...prev,
-            { idPlato: p.id, nombre: p.nombre, precio: p.precio, cantidad: 1 },
+            {
+              idPlato: plato.idPlato,
+              nombre: plato.nombre,
+              precio: plato.precio,
+              cantidad: 1,
+            },
           ],
     );
 
-  const anadirMenu: PedidoContexto["anadirMenu"] = (m, elecciones) =>
+  const anadirMenu: PedidoContexto["anadirMenu"] = (
+    menu,
+    elecciones,
+    detalle,
+  ) =>
     setMenus((prev) => [
       ...prev,
       {
         idLocal: siguienteId.current++,
-        idMenu: m.id,
-        nombre: m.nombre,
-        precio: m.precio ?? PRECIO_MENU,
+        idMenu: menu.idMenu,
+        precio: menu.precio,
         elecciones,
+        detalle,
         cantidad: 1,
       },
     ]);
@@ -103,7 +115,7 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
     platos.reduce((s, l) => s + l.precio * l.cantidad, 0) +
     menus.reduce((s, l) => s + l.precio * l.cantidad, 0);
 
-  // Convierte el estado en el cuerpo que espera CrearPedido (pedidos.ts)
+  // Convierte el estado en el cuerpo que espera CrearPedido (api/pedidos.ts)
   const aRequest = (): PedidoRequest => ({
     platos: platos.map((l) => ({ idPlato: l.idPlato, cantidad: l.cantidad })),
     menus: menus.map((l) => ({
@@ -133,6 +145,7 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePedido(): PedidoContexto {
   const ctx = useContext(Contexto);
   if (!ctx) throw new Error("usePedido debe usarse dentro de <PedidoProvider>");

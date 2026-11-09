@@ -11,6 +11,7 @@ import com.saborhimalaya.dto.PlatoPedido;
 import com.saborhimalaya.entity.Pedido;
 import com.saborhimalaya.entity.Plato;
 import com.saborhimalaya.entity.Usuario;
+import com.saborhimalaya.exception.PedidoInvalidoException;
 import com.saborhimalaya.exception.PedidoNoEncontradoException;
 import com.saborhimalaya.exception.PedidosNoEncontradosException;
 import com.saborhimalaya.exception.PlatoNoEncontradoException;
@@ -20,6 +21,7 @@ import com.saborhimalaya.repository.PlatoRepository;
 import com.saborhimalaya.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -35,6 +37,9 @@ public class PedidoService {
         public Pedido AnadirPedido(PedidoRequest request, String login) {
                 List<PlatoPedido> platosPedidos = request.getPlatos();
                 List<MenuPedido> menuPedidos = request.getMenus();
+
+                if (platosPedidos == null && menuPedidos == null)
+                        throw new PedidoInvalidoException();
                 Pedido nuevo = new Pedido(
                                 usuarioRepository.findByLogin(login)
                                                 .orElseThrow(() -> new UsuarioNoExisteException(login)),

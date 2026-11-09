@@ -2,10 +2,10 @@ package com.saborhimalaya.dto;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 /**
  * PedidoRequest
@@ -14,8 +14,9 @@ import lombok.NonNull;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PedidoRequest {
-
-    private List<MenuPedido> menus;
-    private List<PlatoPedido> platos;
+    @Valid
+    private List<@Valid MenuPedido> menus;
+    @Valid
+    private List<@Valid PlatoPedido> platos;
 
 }

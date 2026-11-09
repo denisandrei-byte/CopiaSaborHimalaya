@@ -1,7 +1,7 @@
 // Llamadas al backend para los pedidos en seleccion (US3, US5)
 
 import type { Usuario } from "./usuarios"
-import { ErrorApi, leerDetalle } from './menus'
+import { ErrorApi, leerDetalle } from './menus.ts'
 
 export interface Pedido {
   idPedido: number
@@ -16,9 +16,13 @@ export interface PlatoPedido {
     cantidad : number
 }
 
+// Debe coincidir con el CHECK de eleccion_menu.tipo en la BBDD
+export type TipoEleccion = 'Entrante' | 'Principal' | 'Postre' | 'Bebida'
+
+// Igual que EleccionMenuCustom del backend: idPlato y el tipo de elección
 export interface EleccionMenuCustom {
-    id : number
-    opcion : string
+    idPlato : number
+    opcion : TipoEleccion
 }
 
 export interface EleccionesMenu {

@@ -3,7 +3,7 @@
 // estas y cambia los imports en ConfigurarPedido.tsx. Lo único que necesita
 // la pantalla son las formas Plato y Menu de abajo.
 
-import { ErrorApi, leerDetalle } from './menus'
+import { ErrorApi, leerDetalle } from '../../api/menus.ts'
 
 // El backend calcula los menús a 15 € fijos (CalcularImporteRequest)
 export const PRECIO_MENU = 15

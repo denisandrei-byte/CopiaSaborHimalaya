@@ -7,13 +7,13 @@ import com.saborhimalaya.repository.UsuarioRepository;
 
 import lombok.AllArgsConstructor;
 
-@Service 
-@AllArgsConstructor 
+@Service
+@AllArgsConstructor
 public class UsuarioService {
 
     private final UsuarioRepository repository;
 
-    public Usuario anadirUsuario(Usuario usuario){
+    public Usuario anadirUsuario(Usuario usuario) {
         return repository.save(usuario);
     }
 }

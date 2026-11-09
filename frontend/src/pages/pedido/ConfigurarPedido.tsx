@@ -1,189 +1,234 @@
-// Pantalla de selección: "Lo que has elegido" + "Tu selección"
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import './pedido.css'
-import type { EleccionesMenu } from './pedidos'
-import { ListarMenus, ListarPlatos, mensajeError, type Menu, type Plato } from './catalogo'
-import { usePedido } from './pedidoContext'
-import { euros } from './formato'
+// Pantalla de selección del pedido: "Lo que has elegido" + "Tu selección" (US3)
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { obtenerMenuDelDia } from "../../api/menus.ts";
+import type { MenuDelDia, Plato } from "../../api/menus.ts";
+import { obtenerPlatosCarta } from "../../api/platos";
+import type { EleccionesMenu, TipoEleccion } from "../../api/pedidos";
+import { usePedido } from "./pedidoContext";
+import { euros, textoError } from "./formato";
+import "./pedido.css";
 
-const CLAVES = ['eleccionMenu1', 'eleccionMenu2', 'eleccionMenu3', 'eleccionMenu4'] as const
+// Las 4 elecciones del menú, en el orden que espera el backend (eleccionMenu1..4)
+const GRUPOS = [
+  { clave: "eleccionMenu1", tipo: "Entrante" },
+  { clave: "eleccionMenu2", tipo: "Principal" },
+  { clave: "eleccionMenu3", tipo: "Postre" },
+  { clave: "eleccionMenu4", tipo: "Bebida" },
+] as const;
 
 interface Props {
-  onRevisar: () => void // navega a ConfirmarPedido
+  onIrACarta: () => void; // "Añadir de la carta": vuelve a la carta, que ya tiene "Añadir al pedido"
+  onRevisar: () => void; // navega a ConfirmarPedido
 }
 
-export default function ConfigurarPedido({ onRevisar }: Props) {
-  const pedido = usePedido()
-  const [platos, setPlatos] = useState<Plato[]>([])
-  const [menus, setMenus] = useState<Menu[]>([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState('')
-  const [dialogo, setDialogo] = useState<'carta' | 'menu' | null>(null)
+export default function ConfigurarPedido({ onIrACarta, onRevisar }: Props) {
+  const pedido = usePedido();
+  const [menuDia, setMenuDia] = useState<MenuDelDia | null>(null);
+  const [bebidas, setBebidas] = useState<Plato[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [dialogoAbierto, setDialogoAbierto] = useState(false);
 
   useEffect(() => {
-    let activo = true
-    Promise.all([ListarPlatos(), ListarMenus()])
-      .then(([p, m]) => {
-        if (!activo) return
-        setPlatos(p)
-        setMenus(m)
+    let activo = true;
+    Promise.all([obtenerMenuDelDia(), obtenerPlatosCarta()])
+      .then(([menu, carta]) => {
+        if (!activo) return;
+        setMenuDia(menu);
+        setBebidas(carta.filter((plato) => plato.categoria === "Bebidas"));
       })
-      .catch((e) => activo && setError(mensajeError(e)))
-      .finally(() => activo && setCargando(false))
+      .catch(
+        (e) =>
+          activo &&
+          setError(textoError(e, "No se pudo cargar el menú del día.")),
+      )
+      .finally(() => activo && setCargando(false));
     return () => {
-      activo = false
-    }
-  }, [])
+      activo = false;
+    };
+  }, []);
 
-  const vacio = pedido.numElementos === 0
+  const vacio = pedido.numElementos === 0;
+  const sinMenu = !cargando && !error && menuDia === null;
 
   return (
-    <main className="pagina">
-      <section>
-        <div className="panel">
-          <div className="cabecera">
-            <h2>Lo que has elegido</h2>
-            <span>{pedido.numElementos} elementos</span>
-          </div>
+    <main className="page-content">
+      <div className="page-heading">
+        <div>
+          <h1>Tu pedido</h1>
+          <p>Revisa lo que has elegido y ajusta las cantidades.</p>
+        </div>
+      </div>
 
-          <div className="tabla-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio</th>
-                  <th>Cantidad</th>
-                  <th>Importe</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vacio && (
+      <div className="pedido-layout">
+        <section>
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Lo que has elegido</h2>
+                <p>{pedido.numElementos} elementos</p>
+              </div>
+            </div>
+            <div className="table-scroll">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan={4} className="vacio">
-                      Aún no has elegido nada. Añade platos o un menú.
-                    </td>
+                    <th>PRODUCTO</th>
+                    <th>PRECIO</th>
+                    <th>CANTIDAD</th>
+                    <th>IMPORTE</th>
                   </tr>
-                )}
+                </thead>
+                <tbody>
+                  {vacio && (
+                    <tr>
+                      <td colSpan={4} className="pedido-vacio">
+                        Aún no has elegido nada. Añade platos de la carta o un
+                        menú.
+                      </td>
+                    </tr>
+                  )}
 
-                {pedido.menus.map((l) => (
-                  <tr key={`m-${l.idLocal}`}>
-                    <td>
-                      <div className="tipo">Menú completo</div>
-                      <div className="nombre">{l.nombre}</div>
-                      <ul className="opciones">
-                        {CLAVES.map((c) => (
-                          <li key={c}>{l.elecciones[c].opcion}</li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td>{euros(l.precio)}</td>
-                    <td>
-                      <ControlCantidad
-                        cantidad={l.cantidad}
-                        onCambiar={(d) => pedido.cambiarCantidadMenu(l.idLocal, d)}
-                      />
-                    </td>
-                    <td className="importe">{euros(l.precio * l.cantidad)}</td>
-                  </tr>
-                ))}
+                  {pedido.menus.map((linea) => (
+                    <tr key={`m-${linea.idLocal}`}>
+                      <td>
+                        <small>Menú completo</small>
+                        <strong>Menú del día</strong>
+                        <ul className="pedido-opciones">
+                          {linea.detalle.map((nombre, i) => (
+                            <li key={i}>{nombre}</li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td>{euros(linea.precio)}</td>
+                      <td>
+                        <ControlCantidad
+                          cantidad={linea.cantidad}
+                          onCambiar={(d) =>
+                            pedido.cambiarCantidadMenu(linea.idLocal, d)
+                          }
+                        />
+                      </td>
+                      <td className="pedido-importe">
+                        {euros(linea.precio * linea.cantidad)}
+                      </td>
+                    </tr>
+                  ))}
 
-                {pedido.platos.map((l) => (
-                  <tr key={`p-${l.idPlato}`}>
-                    <td>
-                      <div className="tipo">De nuestra carta</div>
-                      <div className="nombre">{l.nombre}</div>
-                    </td>
-                    <td>{euros(l.precio)}</td>
-                    <td>
-                      <ControlCantidad
-                        cantidad={l.cantidad}
-                        onCambiar={(d) => pedido.cambiarCantidadPlato(l.idPlato, d)}
-                      />
-                    </td>
-                    <td className="importe">{euros(l.precio * l.cantidad)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  {pedido.platos.map((linea) => (
+                    <tr key={`p-${linea.idPlato}`}>
+                      <td>
+                        <small>De nuestra carta</small>
+                        <strong>{linea.nombre}</strong>
+                      </td>
+                      <td>{euros(linea.precio)}</td>
+                      <td>
+                        <ControlCantidad
+                          cantidad={linea.cantidad}
+                          onCambiar={(d) =>
+                            pedido.cambiarCantidadPlato(linea.idPlato, d)
+                          }
+                        />
+                      </td>
+                      <td className="pedido-importe">
+                        {euros(linea.precio * linea.cantidad)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <p className="ayuda">Puedes ajustar las cantidades. Una cantidad de 0 retira el producto.</p>
-        </div>
+          <p className="pedido-mensaje">
+            Puedes ajustar las cantidades. Una cantidad de 0 retira el producto.
+          </p>
 
-        <div className="acciones">
-          <button className="btn-sec" disabled={cargando || !!error} onClick={() => setDialogo('carta')}>
-            Añadir de la carta
+          <div className="pedido-acciones">
+            <button className="secondary-button" onClick={onIrACarta}>
+              Añadir de la carta
+            </button>
+            <button
+              className="secondary-button"
+              disabled={cargando || !!error || sinMenu}
+              onClick={() => setDialogoAbierto(true)}
+            >
+              Añadir menú
+            </button>
+          </div>
+          {cargando && (
+            <p className="pedido-mensaje">Cargando el menú del día...</p>
+          )}
+          {sinMenu && (
+            <p className="pedido-mensaje">
+              Hoy no hay menú del día configurado.
+            </p>
+          )}
+          {error && <p className="pedido-mensaje error">{error}</p>}
+        </section>
+
+        <aside className="panel pedido-resumen">
+          <h2>Tu selección</h2>
+          <ul>
+            {pedido.menus.map((linea) => (
+              <li key={`rm-${linea.idLocal}`}>
+                <span>{linea.cantidad} × Menú del día</span>
+                <b>{euros(linea.precio * linea.cantidad)}</b>
+              </li>
+            ))}
+            {pedido.platos.map((linea) => (
+              <li key={`rp-${linea.idPlato}`}>
+                <span>
+                  {linea.cantidad} × {linea.nombre}
+                </span>
+                <b>{euros(linea.precio * linea.cantidad)}</b>
+              </li>
+            ))}
+          </ul>
+          <div className="pedido-total">
+            <span className="eyebrow">Total</span>
+            <strong>{euros(pedido.total)}</strong>
+          </div>
+          <button
+            className="primary-button"
+            disabled={vacio}
+            onClick={onRevisar}
+          >
+            Revisar pedido
           </button>
-          <button className="btn-sec" disabled={cargando || !!error} onClick={() => setDialogo('menu')}>
-            Añadir menú
-          </button>
-        </div>
-        {cargando && <p className="mensaje">Cargando carta…</p>}
-        {error && <p className="mensaje error">{error}</p>}
-      </section>
+          <p className="pedido-nota">Solo se registra al confirmar.</p>
+        </aside>
+      </div>
 
-      <aside className="panel resumen">
-        <h2>Tu selección</h2>
-        <ul>
-          {pedido.menus.map((l) => (
-            <li key={`rm-${l.idLocal}`}>
-              <span>
-                {l.cantidad} × {l.nombre}
-              </span>
-              <b>{euros(l.precio * l.cantidad)}</b>
-            </li>
-          ))}
-          {pedido.platos.map((l) => (
-            <li key={`rp-${l.idPlato}`}>
-              <span>
-                {l.cantidad} × {l.nombre}
-              </span>
-              <b>{euros(l.precio * l.cantidad)}</b>
-            </li>
-          ))}
-        </ul>
-        <div className="total">
-          <span>Total</span>
-          <strong>{euros(pedido.total)}</strong>
-        </div>
-        <button className="btn-principal" disabled={vacio} onClick={onRevisar}>
-          Revisar pedido
-        </button>
-        <p className="nota">Solo se registra al confirmar.</p>
-      </aside>
-
-      <Dialogo abierto={dialogo === 'carta'} titulo="Carta" onCerrar={() => setDialogo(null)}>
-        <ul className="lista-platos">
-          {platos.map((p) => (
-            <li key={p.id}>
-              <span>
-                {p.nombre} · {euros(p.precio)}
-              </span>
-              <button className="btn-sec" onClick={() => pedido.anadirPlato(p)}>
-                Añadir
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Dialogo>
-
-      <Dialogo abierto={dialogo === 'menu'} titulo="Añadir menú" onCerrar={() => setDialogo(null)}>
-        <FormularioMenu
-          menus={menus}
-          onAnadir={(menu, elecciones) => {
-            pedido.anadirMenu(menu, elecciones)
-            setDialogo(null)
-          }}
-          onCancelar={() => setDialogo(null)}
-        />
+      <Dialogo
+        abierto={dialogoAbierto}
+        onCerrar={() => setDialogoAbierto(false)}
+      >
+        {menuDia && (
+          <FormularioMenu
+            menu={menuDia}
+            bebidas={bebidas}
+            onAnadir={(elecciones, detalle) => {
+              pedido.anadirMenu(menuDia, elecciones, detalle);
+              setDialogoAbierto(false);
+            }}
+            onCancelar={() => setDialogoAbierto(false)}
+          />
+        )}
       </Dialogo>
     </main>
-  )
+  );
 }
 
 /* ---------- Cantidad (− 1 +) ---------- */
-function ControlCantidad({ cantidad, onCambiar }: { cantidad: number; onCambiar: (delta: number) => void }) {
+function ControlCantidad({
+  cantidad,
+  onCambiar,
+}: {
+  cantidad: number;
+  onCambiar: (delta: number) => void;
+}) {
   return (
-    <div className="cantidad">
+    <div className="pedido-cantidad">
       <button aria-label="Quitar uno" onClick={() => onCambiar(-1)}>
         −
       </button>
@@ -192,125 +237,117 @@ function ControlCantidad({ cantidad, onCambiar }: { cantidad: number; onCambiar:
         +
       </button>
     </div>
-  )
+  );
 }
 
-/* ---------- Diálogo genérico (usa <dialog> nativo) ---------- */
+/* ---------- Diálogo modal con <dialog> nativo ---------- */
 function Dialogo({
   abierto,
-  titulo,
   onCerrar,
   children,
 }: {
-  abierto: boolean
-  titulo: string
-  onCerrar: () => void
-  children: ReactNode
+  abierto: boolean;
+  onCerrar: () => void;
+  children: ReactNode;
 }) {
-  const ref = useRef<HTMLDialogElement>(null)
+  const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    const d = ref.current
-    if (!d) return
-    if (abierto && !d.open) d.showModal()
-    if (!abierto && d.open) d.close()
-  }, [abierto])
+    const dialogo = ref.current;
+    if (!dialogo) return;
+    if (abierto && !dialogo.open) dialogo.showModal();
+    if (!abierto && dialogo.open) dialogo.close();
+  }, [abierto]);
 
   return (
-    <dialog ref={ref} onClose={onCerrar} aria-label={titulo}>
-      <h3>{titulo}</h3>
+    <dialog
+      ref={ref}
+      className="pedido-dialogo"
+      onClose={onCerrar}
+      aria-label="Añadir menú del día"
+    >
       {abierto && children}
-      <div className="dialogo-pie">
-        <button className="btn-sec" onClick={onCerrar}>
-          Cerrar
-        </button>
-      </div>
     </dialog>
-  )
+  );
 }
 
-/* ---------- Formulario del menú: 4 elecciones ---------- */
+/* ---------- Formulario: elegir las 4 opciones del menú del día ---------- */
 function FormularioMenu({
-  menus,
+  menu,
+  bebidas,
   onAnadir,
   onCancelar,
 }: {
-  menus: Menu[]
-  onAnadir: (menu: Menu, elecciones: EleccionesMenu) => void
-  onCancelar: () => void
+  menu: MenuDelDia;
+  bebidas: Plato[];
+  onAnadir: (elecciones: EleccionesMenu, detalle: string[]) => void;
+  onCancelar: () => void;
 }) {
-  const [idMenu, setIdMenu] = useState<number>(menus[0]?.id ?? 0)
-  const [seleccion, setSeleccion] = useState<Record<number, number>>({}) // índice de grupo -> id de opción
-  const [error, setError] = useState('')
+  const [seleccion, setSeleccion] = useState<
+    Partial<Record<TipoEleccion, number>>
+  >({});
+  const [error, setError] = useState("");
 
-  const menu = menus.find((m) => m.id === idMenu)
-
-  function cambiarMenu(id: number) {
-    setIdMenu(id)
-    setSeleccion({})
-    setError('')
-  }
+  const opciones: Record<TipoEleccion, Plato[]> = {
+    Entrante: menu.entrantes,
+    Principal: menu.principales,
+    Postre: menu.postres,
+    Bebida: bebidas,
+  };
 
   function anadir() {
-    if (!menu) return
-    if (menu.grupos.length !== CLAVES.length) {
-      setError('Este menú no tiene las 4 elecciones configuradas.')
-      return
-    }
-    const elecciones = {} as EleccionesMenu
-    for (let i = 0; i < CLAVES.length; i++) {
-      const opcion = menu.grupos[i].opciones.find((o) => o.id === seleccion[i])
-      if (!opcion) {
-        setError(`Elige una opción en: ${menu.grupos[i].titulo}`)
-        return
+    const elecciones = {} as EleccionesMenu;
+    const detalle: string[] = [];
+    for (const grupo of GRUPOS) {
+      const plato = opciones[grupo.tipo].find(
+        (p) => p.idPlato === seleccion[grupo.tipo],
+      );
+      if (!plato) {
+        setError(`Elige una opción de ${grupo.tipo.toLowerCase()}.`);
+        return;
       }
-      elecciones[CLAVES[i]] = { id: opcion.id, opcion: opcion.nombre }
+      elecciones[grupo.clave] = { idPlato: plato.idPlato, opcion: grupo.tipo };
+      detalle.push(plato.nombre);
     }
-    onAnadir(menu, elecciones)
+    onAnadir(elecciones, detalle);
   }
-
-  if (menus.length === 0) return <p className="mensaje">No hay menús disponibles.</p>
 
   return (
     <div>
-      <label htmlFor="selMenu">Menú</label>
-      <select id="selMenu" value={idMenu} onChange={(e) => cambiarMenu(Number(e.target.value))}>
-        {menus.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.nombre}
-          </option>
-        ))}
-      </select>
+      <h2>Menú del día</h2>
+      <p>{euros(menu.precio)} · entrante, principal, postre y bebida</p>
 
-      {menu?.grupos.map((g, i) => (
-        <div key={i}>
-          <label htmlFor={`grupo-${i}`}>{g.titulo}</label>
+      {GRUPOS.map(({ tipo }) => (
+        <label key={tipo}>
+          {tipo}
           <select
-            id={`grupo-${i}`}
-            value={seleccion[i] ?? ''}
-            onChange={(e) => setSeleccion((s) => ({ ...s, [i]: Number(e.target.value) }))}
+            value={seleccion[tipo] ?? ""}
+            onChange={(e) => {
+              setSeleccion((s) => ({ ...s, [tipo]: Number(e.target.value) }));
+              setError("");
+            }}
           >
             <option value="" disabled>
               Elige una opción
             </option>
-            {g.opciones.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.nombre}
+            {opciones[tipo].map((plato) => (
+              <option key={plato.idPlato} value={plato.idPlato}>
+                {plato.nombre}
               </option>
             ))}
           </select>
-        </div>
+        </label>
       ))}
 
-      {error && <p className="mensaje error">{error}</p>}
-      <div className="dialogo-pie">
-        <button className="btn-sec" onClick={onCancelar}>
+      {error && <p className="pedido-mensaje error">{error}</p>}
+      <div className="pedido-dialogo-pie">
+        <button className="secondary-button" onClick={onCancelar}>
           Cancelar
         </button>
-        <button className="btn-principal btn-auto" onClick={anadir}>
+        <button className="primary-button" onClick={anadir}>
           Añadir menú
         </button>
       </div>
     </div>
-  )
+  );
 }
