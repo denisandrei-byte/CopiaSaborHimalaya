@@ -33,9 +33,9 @@ public class EleccionesMenu {
         boolean sonValidas = false;
         String nuevaCadena = eleccionMenu1.getOpcion() + " " + eleccionMenu2.getOpcion() + " "
                 + eleccionMenu3.getOpcion() + " " + eleccionMenu4.getOpcion();
-        if (nuevaCadena.contains("Principales")
-                && nuevaCadena.contains("Postres") && nuevaCadena.contains("Bebidas")
-                && nuevaCadena.contains("Entrantes"))
+        if (nuevaCadena.contains("Principal")
+                && nuevaCadena.contains("Postre") && nuevaCadena.contains("Bebida")
+                && nuevaCadena.contains("Entrante"))
             sonValidas = true;
         return sonValidas;
     }

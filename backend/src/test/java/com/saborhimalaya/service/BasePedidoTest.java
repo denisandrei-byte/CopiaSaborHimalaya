@@ -131,8 +131,8 @@ abstract class BasePedidoTest {
 
     protected EleccionesMenu eleccionesValidas() {
         return new EleccionesMenu(
-                eleccion(momos, "Entrantes"), eleccion(dalBhat, "Principales"),
-                eleccion(kheer, "Postres"), eleccion(agua, "Bebidas"));
+                eleccion(momos, "Entrante"), eleccion(dalBhat, "Principal"),
+                eleccion(kheer, "Postre"), eleccion(agua, "Bebida"));
     }
 
     protected PlatoPedido platoPedido(Plato plato, int cantidad) {
@@ -146,12 +146,12 @@ abstract class BasePedidoTest {
     // Si vuelves a idMenu, usa menu.getIdMenu() en menuPedido(...) y un id
     // inexistente
     // (por ejemplo 9999L) en los tests que usan menuPedidoEnFecha(otroDia, ...).
-    protected MenuPedido menuPedidoEnFecha(LocalDate fecha, EleccionesMenu elecciones, int cantidad) {
-        return new MenuPedido(fecha, elecciones, cantidad);
+    protected MenuPedido menuPedidoEnFecha(EleccionesMenu elecciones, int cantidad) {
+        return new MenuPedido(elecciones, cantidad);
     }
 
     protected MenuPedido menuPedido(EleccionesMenu elecciones, int cantidad) {
-        return menuPedidoEnFecha(FECHA_MENU, elecciones, cantidad);
+        return menuPedidoEnFecha(elecciones, cantidad);
     }
 
     // PedidoRequest(menus, platos): el orden de los argumentos es el de los campos

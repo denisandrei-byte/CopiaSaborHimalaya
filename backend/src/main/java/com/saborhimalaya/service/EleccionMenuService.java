@@ -6,11 +6,13 @@ import com.saborhimalaya.dto.EleccionMenuCustom;
 import com.saborhimalaya.dto.MenuPedido;
 import com.saborhimalaya.entity.EleccionMenu;
 import com.saborhimalaya.entity.LineaPedido;
+import com.saborhimalaya.entity.OpcionMenu;
 import com.saborhimalaya.entity.Plato;
 import com.saborhimalaya.exception.EleccionesMenuInvalidasException;
 import com.saborhimalaya.exception.PedidoInvalidoException;
 import com.saborhimalaya.exception.PlatoNoEncontradoException;
 import com.saborhimalaya.repository.EleccionMenuRepository;
+import com.saborhimalaya.repository.OpcionMenuRepository;
 import com.saborhimalaya.repository.PlatoRepository;
 
 import jakarta.transaction.Transactional;
@@ -21,6 +23,7 @@ import lombok.AllArgsConstructor;
 public class EleccionMenuService {
         private final PlatoRepository platoRepository;
         private final EleccionMenuRepository repository;
+        private final OpcionMenuRepository opcionMenuRepository;
 
         @Transactional
         public void AnadirOpcionesMenu(LineaPedido nuevLineaPedido, MenuPedido menuPedido) {
@@ -40,8 +43,23 @@ public class EleccionMenuService {
                 Plato platoMenu = platoRepository.findById(eleccion.getIdPlato())
                                 .orElseThrow(() -> new PlatoNoEncontradoException(
                                                 eleccion.getIdPlato()));
-                if (!(platoMenu.getCategoria().getNombre().toLowerCase().equals(eleccion.getOpcion().toLowerCase())))
-                        throw new PedidoInvalidoException();
+                if (!eleccion.getOpcion().equals("Bebida")) {
+                        OpcionMenu opcionMenu = opcionMenuRepository
+                                        .findByMenuAndPlato(lineaPedido.getMenu(), platoMenu)
+                                        .orElseThrow(() -> new PedidoInvalidoException(
+                                                        "Porque no existe algun plato elegido en el menú"));
+
+                        if (!eleccion.getOpcion().toLowerCase()
+                                        .equals(opcionMenu.getTipoOpcion().getNombre().toLowerCase()))
+                                throw new PedidoInvalidoException(
+                                                "La categoria del plato seleccionado no coincide con la del menú");
+                } else {
+                        if (!eleccion.compararEntrePlatoYEleccion(platoMenu.getCategoria()) || !platoMenu.isEnCarta())
+                                throw new PedidoInvalidoException(
+                                                "porque " + eleccion.getIdPlato()
+                                                                + " no es una bebida o no esta en la carta");
+                }
+
                 EleccionMenu eleccionMenu = new EleccionMenu(lineaPedido,
                                 platoMenu,
                                 eleccion.getOpcion());

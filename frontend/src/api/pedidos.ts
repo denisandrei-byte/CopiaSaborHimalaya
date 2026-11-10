@@ -33,7 +33,7 @@ export interface EleccionesMenu {
 }
 
 export interface MenuPedido {
-    idMenu : number
+    fechaMenu : string
     elecciones : EleccionesMenu
     cantidad : number
 }

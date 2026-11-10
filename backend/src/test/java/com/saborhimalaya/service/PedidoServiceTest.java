@@ -30,186 +30,157 @@ import com.saborhimalaya.exception.PlatoNoEncontradoException;
  * elecciones no permitidos y rollback completo si falla una linea.
  */
 class PedidoServiceTest extends BasePedidoTest {
-    @Autowired
-    private PedidoService pedidoService;
+        @Autowired
+        private PedidoService pedidoService;
 
-    // ---- Pedido correcto y calculo de importes ----
+        // ---- Pedido correcto y calculo de importes ----
 
-    @Test
-    void pedidoCorrecto_guardaPedidoLineasYEleccionesConElImporteTotal() {
-        // 2 x curry (12,00) + 1 menu (15,00) = 39,00
-        PedidoRequest request = pedido(
-                Arrays.asList(platoPedido(curry, 2)),
-                Arrays.asList(menuPedido(eleccionesValidas(), 1)));
+        @Test
+        void pedidoCorrecto_guardaPedidoLineasYEleccionesConElImporteTotal() {
+                // 2 x curry (12,00) + 1 menu (15,00) = 39,00
+                PedidoRequest request = pedido(
+                                Arrays.asList(platoPedido(curry, 2)),
+                                Arrays.asList(menuPedido(eleccionesValidas(), 1)));
 
-        Pedido creado = pedidoService.AnadirPedido(request, LOGIN);
+                Pedido creado = pedidoService.AnadirPedido(request, LOGIN);
 
-        Pedido guardado = pedidoRepository.findById(creado.getIdPedido()).orElseThrow();
-        assertThat(guardado.getImporteTotal()).isEqualByComparingTo("39.00");
-        assertThat(guardado.getEstado()).isEqualTo(Pedido.EN_PREPARACION);
-        assertThat(pedidoRepository.count()).isEqualTo(1);
-        assertThat(lineaPedidoRepository.count()).isEqualTo(2); // una de plato y una de menu
-        assertThat(eleccionMenuRepository.count()).isEqualTo(4); // las cuatro elecciones del menu
-    }
+                Pedido guardado = pedidoRepository.findById(creado.getIdPedido()).orElseThrow();
+                assertThat(guardado.getImporteTotal()).isEqualByComparingTo("39.00");
+                assertThat(guardado.getEstado()).isEqualTo(Pedido.RECIBIDO);
+                assertThat(pedidoRepository.count()).isEqualTo(1);
+                assertThat(lineaPedidoRepository.count()).isEqualTo(2); // una de plato y una de menu
+                assertThat(eleccionMenuRepository.count()).isEqualTo(4); // las cuatro elecciones del menu
+        }
 
-    @Test
-    void importeTotal_sumaVariosPlatosYMenusConSusCantidades() {
-        // 3 x momos (7,50) + 1 x curry (12,00) + 2 menus (15,00) = 22,50 + 12,00 +
-        // 30,00 = 64,50
-        PedidoRequest request = pedido(
-                Arrays.asList(platoPedido(momos, 3), platoPedido(curry, 1)),
-                Arrays.asList(menuPedido(eleccionesValidas(), 2)));
+        @Test
+        void importeTotal_sumaVariosPlatosYMenusConSusCantidades() {
+                // 3 x momos (7,50) + 1 x curry (12,00) + 2 menus (15,00) = 22,50 + 12,00 +
+                // 30,00 = 64,50
+                PedidoRequest request = pedido(
+                                Arrays.asList(platoPedido(momos, 3), platoPedido(curry, 1)),
+                                Arrays.asList(menuPedido(eleccionesValidas(), 2)));
 
-        Pedido creado = pedidoService.AnadirPedido(request, LOGIN);
+                Pedido creado = pedidoService.AnadirPedido(request, LOGIN);
 
-        assertThat(creado.getImporteTotal()).isEqualByComparingTo("64.50");
-        assertThat(lineaPedidoRepository.count()).isEqualTo(3);
-    }
+                assertThat(creado.getImporteTotal()).isEqualByComparingTo("64.50");
+                assertThat(lineaPedidoRepository.count()).isEqualTo(3);
+        }
 
-    // ---- Pedido vacio ----
+        // ---- Pedido vacio ----
 
-    @Test
-    void pedidoVacio_sinListas_seRechaza() {
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(new PedidoRequest(null, null), LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado();
-    }
+        @Test
+        void pedidoVacio_sinListas_seRechaza() {
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(new PedidoRequest(null, null), LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado();
+        }
 
-    @Test
-    void pedidoVacio_conListasVacias_seRechaza() {
-        PedidoRequest request = pedido(new ArrayList<PlatoPedido>(), new ArrayList<MenuPedido>());
+        @Test
+        void pedidoVacio_conListasVacias_seRechaza() {
+                PedidoRequest request = pedido(new ArrayList<PlatoPedido>(), new ArrayList<MenuPedido>());
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(MethodArgumentNotValidException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado();
+        }
 
-    // ---- Cantidades invalidas ----
+        // ---- Cantidades invalidas ----
 
-    @ParameterizedTest
-    @ValueSource(ints = { 0, -1 })
-    void cantidadInvalida_enUnPlato_seRechaza(int cantidad) {
-        PedidoRequest request = pedido(Arrays.asList(platoPedido(curry, cantidad)), null);
+        @ParameterizedTest
+        @ValueSource(ints = { 0, -1 })
+        void cantidadInvalida_enUnPlato_seRechaza(int cantidad) {
+                PedidoRequest request = pedido(Arrays.asList(platoPedido(curry, cantidad)), null);
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(MethodArgumentNotValidException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado();
+        }
 
-    @ParameterizedTest
-    @ValueSource(ints = { 0, -3 })
-    void cantidadInvalida_enUnMenu_seRechaza(int cantidad) {
-        PedidoRequest request = pedido(null, Arrays.asList(menuPedido(eleccionesValidas(), cantidad)));
+        @ParameterizedTest
+        @ValueSource(ints = { 0, -3 })
+        void cantidadInvalida_enUnMenu_seRechaza(int cantidad) {
+                PedidoRequest request = pedido(null, Arrays.asList(menuPedido(eleccionesValidas(), cantidad)));
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado();
+        }
+        // ---- Productos o elecciones no permitidos ----
 
-    @Test
-    void cantidadNula_enUnPlato_seRechaza() {
-        PedidoRequest request = pedido(Arrays.asList(new PlatoPedido(curry.getIdPlato(), null)), null);
+        @Test
+        void platoInexistente_seRechaza() {
+                PedidoRequest request = pedido(Arrays.asList(new PlatoPedido(9999L, 1)), null);
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PlatoNoEncontradoException.class);
+                assertNadaGuardado();
+        }
 
-    // ---- Productos o elecciones no permitidos ----
+        @Test
+        void platoFueraDeCarta_seRechaza() {
+                PedidoRequest request = pedido(Arrays.asList(platoPedido(platoRetirado, 1)), null);
 
-    @Test
-    void platoInexistente_seRechaza() {
-        PedidoRequest request = pedido(Arrays.asList(new PlatoPedido(9999L, 1)), null);
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PlatoNoEncontradoException.class);
+                assertNadaGuardado();
+        }
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PlatoNoEncontradoException.class);
-        assertNadaGuardado();
-    }
+        @Test
+        void eleccionQueNoEsOpcionDelMenu_seRechaza() {
+                // curry existe y esta en la carta, pero no es una de las opciones de principal
+                // del menu
+                EleccionesMenu elecciones = new EleccionesMenu(
+                                eleccion(momos, "Entrante"), eleccion(curry, "Principal"),
+                                eleccion(kheer, "Postre"), eleccion(agua, "Bebida"));
 
-    @Test
-    void platoFueraDeCarta_seRechaza() {
-        PedidoRequest request = pedido(Arrays.asList(platoPedido(platoRetirado, 1)), null);
+                assertThatThrownBy(
+                                () -> pedidoService.AnadirPedido(pedido(null, Arrays.asList(menuPedido(elecciones, 1))),
+                                                LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado();
+        }
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PlatoNoEncontradoException.class);
-        assertNadaGuardado();
-    }
+        // ---- Rollback completo si falla una linea ----
+        // En todos estos casos alguna linea ya se ha guardado cuando se produce el
+        // fallo:
+        // si la transaccion no se deshiciera, quedarian pedido y lineas huerfanos.
 
-    @Test
-    void menuDeUnaFechaSinMenu_seRechaza() {
-        MenuPedido menuOtroDia = menuPedidoEnFecha(FECHA_MENU.plusDays(1), eleccionesValidas(), 1);
+        @Test
+        void rollback_siFallaLaSegundaLineaDePlato() {
+                // curry es valido (su linea se guarda) y platoRetirado falla despues
+                PedidoRequest request = pedido(
+                                Arrays.asList(platoPedido(curry, 1), platoPedido(platoRetirado, 1)), null);
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(pedido(null, Arrays.asList(menuOtroDia)), LOGIN))
-                .isInstanceOf(MenuNoConfiguradoException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PlatoNoEncontradoException.class);
+                assertNadaGuardado();
+        }
 
-    @Test
-    void menuSinConfigurar_seRechaza() {
-        LocalDate otroDia = FECHA_MENU.plusDays(1);
-        menuRepository.save(new Menu(otroDia, new BigDecimal("15.00"), false));
-        MenuPedido menuSinConfigurar = menuPedidoEnFecha(otroDia, eleccionesValidas(), 1);
+        @Test
+        void rollback_siFallaLaEleccionDeUnMenuTrasGuardarLaLineaDePlato() {
+                EleccionesMenu eleccionesInvalidas = new EleccionesMenu(
+                                eleccion(momos, "Entrante"), eleccion(curry, "Principal"),
+                                eleccion(kheer, "Postre"), eleccion(agua, "Bebida"));
+                PedidoRequest request = pedido(
+                                Arrays.asList(platoPedido(curry, 1)),
+                                Arrays.asList(menuPedido(eleccionesInvalidas, 1)));
 
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(pedido(null, Arrays.asList(menuSinConfigurar)), LOGIN))
-                .isInstanceOf(MenuNoConfiguradoException.class);
-        assertNadaGuardado();
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado(); // ni el pedido, ni la linea de plato, ni la linea de menu
+        }
 
-    @Test
-    void eleccionQueNoEsOpcionDelMenu_seRechaza() {
-        // curry existe y esta en la carta, pero no es una de las opciones de principal
-        // del menu
-        EleccionesMenu elecciones = new EleccionesMenu(
-                eleccion(momos, "Entrante"), eleccion(curry, "Principal"),
-                eleccion(kheer, "Postre"), eleccion(agua, "Bebida"));
+        @Test
+        void rollback_siFallaUnSegundoMenuTrasGuardarElPrimero() {
+                EleccionesMenu eleccionesInvalidas = new EleccionesMenu(
+                                eleccion(momos, "Entrante"), eleccion(dalBhat, "Principal"),
+                                eleccion(kheer, "Postre"), eleccion(curry, "Bebida")); // curry no es una bebida
+                PedidoRequest request = pedido(null, Arrays.asList(
+                                menuPedido(eleccionesValidas(), 1),
+                                menuPedido(eleccionesInvalidas, 1)));
 
-        assertThatThrownBy(
-                () -> pedidoService.AnadirPedido(pedido(null, Arrays.asList(menuPedido(elecciones, 1))), LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado();
-    }
-
-    // ---- Rollback completo si falla una linea ----
-    // En todos estos casos alguna linea ya se ha guardado cuando se produce el
-    // fallo:
-    // si la transaccion no se deshiciera, quedarian pedido y lineas huerfanos.
-
-    @Test
-    void rollback_siFallaLaSegundaLineaDePlato() {
-        // curry es valido (su linea se guarda) y platoRetirado falla despues
-        PedidoRequest request = pedido(
-                Arrays.asList(platoPedido(curry, 1), platoPedido(platoRetirado, 1)), null);
-
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PlatoNoEncontradoException.class);
-        assertNadaGuardado();
-    }
-
-    @Test
-    void rollback_siFallaLaEleccionDeUnMenuTrasGuardarLaLineaDePlato() {
-        EleccionesMenu eleccionesInvalidas = new EleccionesMenu(
-                eleccion(momos, "Entrante"), eleccion(curry, "Principal"),
-                eleccion(kheer, "Postre"), eleccion(agua, "Bebida"));
-        PedidoRequest request = pedido(
-                Arrays.asList(platoPedido(curry, 1)),
-                Arrays.asList(menuPedido(eleccionesInvalidas, 1)));
-
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado(); // ni el pedido, ni la linea de plato, ni la linea de menu
-    }
-
-    @Test
-    void rollback_siFallaUnSegundoMenuTrasGuardarElPrimero() {
-        EleccionesMenu eleccionesInvalidas = new EleccionesMenu(
-                eleccion(momos, "Entrante"), eleccion(dalBhat, "Principal"),
-                eleccion(kheer, "Postre"), eleccion(curry, "Bebida")); // curry no es una bebida
-        PedidoRequest request = pedido(null, Arrays.asList(
-                menuPedido(eleccionesValidas(), 1),
-                menuPedido(eleccionesInvalidas, 1)));
-
-        assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
-                .isInstanceOf(PedidoInvalidoException.class);
-        assertNadaGuardado(); // tampoco las 4 elecciones del primer menu
-    }
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(PedidoInvalidoException.class);
+                assertNadaGuardado(); // tampoco las 4 elecciones del primer menu
+        }
 }

@@ -68,26 +68,4 @@ class LineaPedidoServiceTest extends BasePedidoTest {
                 .isInstanceOf(PlatoNoEncontradoException.class);
         assertThat(lineaPedidoRepository.count()).isEqualTo(0);
     }
-
-    @Test
-    void lineaDeMenu_fechaSinMenu_noGuardaNada() {
-        Pedido pedido = pedidoVacioGuardado();
-        MenuPedido menuOtroDia = menuPedidoEnFecha(FECHA_MENU.plusDays(1), eleccionesValidas(), 1);
-
-        assertThatThrownBy(() -> lineaPedidoService.AnadirLineaPedidoMenu(menuOtroDia, pedido))
-                .isInstanceOf(MenuNoConfiguradoException.class);
-        assertThat(lineaPedidoRepository.count()).isEqualTo(0);
-    }
-
-    @Test
-    void lineaDeMenu_menuSinConfigurar_noGuardaNada() {
-        Pedido pedido = pedidoVacioGuardado();
-        LocalDate otroDia = FECHA_MENU.plusDays(1);
-        menuRepository.save(new Menu(otroDia, new BigDecimal("15.00"), false));
-        MenuPedido menuSinConfigurar = menuPedidoEnFecha(otroDia, eleccionesValidas(), 1);
-
-        assertThatThrownBy(() -> lineaPedidoService.AnadirLineaPedidoMenu(menuSinConfigurar, pedido))
-                .isInstanceOf(MenuNoConfiguradoException.class);
-        assertThat(lineaPedidoRepository.count()).isEqualTo(0);
-    }
 }

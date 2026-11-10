@@ -34,7 +34,7 @@ interface PedidoContexto {
   total: number;
   anadirPlato: (plato: Pick<Plato, "idPlato" | "nombre" | "precio">) => void;
   anadirMenu: (
-    menu: { idMenu: number; precio: number },
+    menu: { fechaMenu: string; precio: number },
     elecciones: EleccionesMenu,
     detalle: string[],
   ) => void;
@@ -79,7 +79,7 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
       ...prev,
       {
         idLocal: siguienteId.current++,
-        idMenu: menu.idMenu,
+        fechaMenu: menu.fechaMenu,
         precio: menu.precio,
         elecciones,
         detalle,

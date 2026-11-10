@@ -47,14 +47,4 @@ public class GestorErrores {
     public ProblemDetail pedidoInvalido(PedidoInvalidoException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail validacion(MethodArgumentNotValidException e) {
-        String detalle = e.getBindingResult().getAllErrors().stream()
-                .map(error -> error instanceof FieldError campo
-                        ? campo.getField() + ": " + campo.getDefaultMessage()
-                        : error.getDefaultMessage())
-                .collect(Collectors.joining("; "));
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detalle);
-    }
 }

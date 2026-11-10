@@ -1,23 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { crearPlato, obtenerPlatosCarta } from "./api/platos";
-import { ErrorApi } from "./api/menus.ts";
-import type { Plato } from "./api/menus.ts";
+import { ErrorApi } from "./api/menus";
+import type { Plato } from "./api/menus";
 import ConfigurarMenu from "./pages/ConfigurarMenu";
 import ListadoPlatosMenu from "./pages/ListadoPlatosMenu";
-import ConfigurarPedido from "./pages/pedido/ConfigurarPedido";
-import ConfirmarPedido from "./pages/pedido/ConfirmarPedido";
-import { usePedido } from "./pages/pedido/pedidoContext";
 import "./App.css";
 
-type Pantalla =
-  | "carta"
-  | "gestion"
-  | "nuevo"
-  | "configurar"
-  | "listado"
-  | "pedido"
-  | "confirmar";
+type Pantalla = "carta" | "gestion" | "nuevo" | "configurar" | "listado";
 type Categoria =
   | "Entrantes"
   | "Ensaladas"
@@ -45,7 +35,6 @@ function App() {
   const [cargandoCarta, setCargandoCarta] = useState(true);
   const [errorCarta, setErrorCarta] = useState("");
   const [notice, setNotice] = useState("");
-  const [noticePedido, setNoticePedido] = useState("");
   const [guardandoPlato, setGuardandoPlato] = useState(false);
   const [errorPlato, setErrorPlato] = useState("");
   const visibleDishes = useMemo(
@@ -142,11 +131,6 @@ function App() {
           onCategoryChange={setCategory}
           cargando={cargandoCarta}
           error={errorCarta}
-          notice={noticePedido}
-          onVerSeleccion={() => {
-            setNoticePedido("");
-            setPantalla("pedido");
-          }}
         />
       )}
       {pantalla === "gestion" && (
@@ -170,23 +154,6 @@ function App() {
       )}
       {pantalla === "configurar" && <ConfigurarMenu />}
       {pantalla === "listado" && <ListadoPlatosMenu />}
-      {pantalla === "pedido" && (
-        <ConfigurarPedido
-          onIrACarta={() => setPantalla("carta")}
-          onRevisar={() => setPantalla("confirmar")}
-        />
-      )}
-      {pantalla === "confirmar" && (
-        <ConfirmarPedido
-          onVolver={() => setPantalla("pedido")}
-          onConfirmado={() => {
-            setNoticePedido(
-              "Tu pedido se ha registrado correctamente y está en preparación.",
-            );
-            setPantalla("carta");
-          }}
-        />
-      )}
       <footer className="site-footer">
         <span>© 2026 Sabor del Himalaya</span>
         <span>Tradición de lejos. Sabor de casa.</span>
@@ -225,18 +192,13 @@ function Carta({
   onCategoryChange,
   cargando,
   error,
-  notice,
-  onVerSeleccion,
 }: {
   dishes: Plato[];
   category: "Todas" | Categoria;
   onCategoryChange: (category: "Todas" | Categoria) => void;
   cargando: boolean;
   error: string;
-  notice: string;
-  onVerSeleccion: () => void;
 }) {
-  const pedido = usePedido();
   if (cargando)
     return (
       <main className="page-content">
@@ -264,15 +226,13 @@ function Carta({
       <PageHeading
         label=""
         title="Nuestra carta"
-        subtitle="Recetas con raíces. 
-    Sabores para compartir."
+        subtitle="Recetas con raíces. Sabores para compartir."
         action={
-          <button className="secondary-button" onClick={onVerSeleccion}>
-            Ver selección <span className="count">{pedido.numElementos}</span>♧
+          <button className="secondary-button">
+            Ver selección <span className="count">0</span> ♧
           </button>
         }
       />
-      {notice && <div className="notice success">{notice}</div>}
       <div className="catalogue-layout">
         <div className="catalogue-main">
           <div className="catalogue-toolbar">
@@ -312,12 +272,7 @@ function Carta({
                           <strong>{money(dish.precio)}</strong>
                         </div>
                         <p>{dish.descripcion}</p>
-                        <button
-                          className="add-button"
-                          onClick={() => pedido.anadirPlato(dish)}
-                        >
-                          Añadir al pedido
-                        </button>
+                        <button className="add-button">Añadir al pedido</button>
                       </div>
                     </article>
                   ))}
@@ -331,26 +286,19 @@ function Carta({
             );
           })}
         </div>
-        <SelectionPreview onVer={onVerSeleccion} />
+        <SelectionPreview />
       </div>
     </main>
   );
 }
 
-function SelectionPreview({ onVer }: { onVer: () => void }) {
-  const pedido = usePedido();
+function SelectionPreview() {
   return (
     <aside className="selection-preview">
       <div className="selection-icon">♧</div>
       <h2>Tu selección</h2>
-      <p>
-        {pedido.numElementos} elementos seleccionados · {money(pedido.total)}
-      </p>
-      <button
-        className="primary-button"
-        disabled={pedido.numElementos === 0}
-        onClick={onVer}
-      >
+      <p>0 elementos seleccionados</p>
+      <button className="primary-button" disabled>
         Ver selección <span>→</span>
       </button>
     </aside>

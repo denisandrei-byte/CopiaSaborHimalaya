@@ -38,12 +38,13 @@ public class PedidoService {
                 List<PlatoPedido> platosPedidos = request.getPlatos();
                 List<MenuPedido> menuPedidos = request.getMenus();
 
-                if (platosPedidos == null && menuPedidos == null)
+                if (((platosPedidos == null || platosPedidos.isEmpty())
+                                && (menuPedidos == null || menuPedidos.isEmpty())))
                         throw new PedidoInvalidoException();
                 Pedido nuevo = new Pedido(
                                 usuarioRepository.findByLogin(login)
                                                 .orElseThrow(() -> new UsuarioNoExisteException(login)),
-                                CalcularImporteRequest(platosPedidos, menuPedidos), Pedido.EN_PREPARACION,
+                                CalcularImporteRequest(platosPedidos, menuPedidos), Pedido.RECIBIDO,
                                 LocalDateTime.now());
                 Pedido creado = repository.save(nuevo);
                 if (platosPedidos != null) {
@@ -80,15 +81,17 @@ public class PedidoService {
                 BigDecimal importDecimal = new BigDecimal(0);
                 if (platoPedidos != null) {
                         for (PlatoPedido plato : platoPedidos) {
+                                Integer cantidad = plato.getCantidad();
                                 Plato pl = platoRepository.findById(plato.getIdPlato())
                                                 .orElseThrow(() -> new PlatoNoEncontradoException(plato.getIdPlato()));
                                 importDecimal = importDecimal
-                                                .add(pl.getPrecio().multiply(BigDecimal.valueOf(plato.getCantidad())));
+                                                .add(pl.getPrecio().multiply(BigDecimal.valueOf(cantidad)));
                         }
                 }
                 if (menuPedidos != null) {
                         for (MenuPedido men : menuPedidos) {
-                                importDecimal = importDecimal.add(BigDecimal.valueOf(15 * men.getCantidad()));
+                                importDecimal = importDecimal.add(
+                                                (new BigDecimal(15).multiply(BigDecimal.valueOf(men.getCantidad()))));
                         }
                 }
                 return importDecimal;

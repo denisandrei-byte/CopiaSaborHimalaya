@@ -14,7 +14,6 @@ Content-Type: application/json
   "platos": [{ "idPlato": 1, "cantidad": 2 }],
   "menus": [
     {
-      "fechaMenu": "2026-11-10T00:00:00",
       "cantidad": 1,
       "elecciones": {
         "eleccionMenu1": { "idPlato": 2, "opcion": "Entrante" },
