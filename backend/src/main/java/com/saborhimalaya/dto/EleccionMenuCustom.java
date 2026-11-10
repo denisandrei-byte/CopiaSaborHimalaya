@@ -15,6 +15,6 @@ public class EleccionMenuCustom {
     @NotNull
     private Long idPlato;
     @NotBlank
-    @Pattern(regexp = "^(Postre|Principal|Entrante|Bebida)$", message = "La eleccion de Menú no esninguna categoría definida")
+    @Pattern(regexp = "^(Postres|Principales|Entrantes|Bebidas)$", message = "La eleccion de Menú no esninguna categoría definida")
     private String opcion;
 }

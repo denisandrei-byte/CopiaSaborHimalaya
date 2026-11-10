@@ -12,5 +12,5 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
 
     Optional<Menu> findByFecha(LocalDate fecha);
 
-    Optional<Menu> findByFechaAndConfigurado(LocalDateTime fecha, boolean configurado);
+    Optional<Menu> findByFechaAndConfigurado(LocalDate fecha, boolean configurado);
 }

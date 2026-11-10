@@ -33,7 +33,7 @@ public class LineaPedidoService {
                 LineaPedido nuevaLineaPedido = new LineaPedido(pedido, null,
                                 menuOr,
                                 menu.getCantidad(),
-                                importe.add(new BigDecimal(15).multiply(BigDecimal.valueOf(menu.getCantidad()))));
+                                importe.add(new BigDecimal(15)));
                 LineaPedido lineaPedidoCreada = repository.save(nuevaLineaPedido);
                 opcionMenuService.AnadirOpcionesMenu(lineaPedidoCreada, menu);
         }
@@ -42,13 +42,12 @@ public class LineaPedidoService {
                 BigDecimal importe = new BigDecimal(0);
                 Plato platoOr;
                 LineaPedido nuevaLineaPedido = new LineaPedido(pedido,
-                                platoOr = platoRepository.findByIdAndEnCarta(platoPedido.getIdPlato(), true)
+                                platoOr = platoRepository.findByIdPlatoAndEnCarta(platoPedido.getIdPlato(), true)
                                                 .orElseThrow(() -> new PlatoNoEncontradoException(
                                                                 platoPedido.getIdPlato())),
                                 null,
                                 platoPedido.getCantidad(),
-                                importe.add(platoOr.getPrecio()
-                                                .multiply(BigDecimal.valueOf(platoPedido.getCantidad()))));
+                                importe.add(platoOr.getPrecio()));
                 repository.save(nuevaLineaPedido);
 
         }

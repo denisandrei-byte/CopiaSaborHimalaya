@@ -58,7 +58,8 @@ class PlatoServiceTest {
     @Test
     void devuelveLosDatosDelPlatoAlConsultarLaCarta() {
         Plato plato = new Plato("Momos", "Momos de verduras", new BigDecimal("7.50"), Categoria.ENTRANTES, true);
-        Plato platoFueraDeCarta = new Plato("Curry oculto", "Curry no disponible", new BigDecimal("10.00"), Categoria.PRINCIPALES, false);
+        Plato platoFueraDeCarta = new Plato("Curry oculto", "Curry no disponible", new BigDecimal("10.00"),
+                Categoria.PRINCIPALES, false);
         platoRepository.saveAndFlush(plato);
         platoRepository.saveAndFlush(platoFueraDeCarta);
         entityManager.clear();
@@ -76,11 +77,13 @@ class PlatoServiceTest {
 
     @Test
     void guardaElNuevoPlatoComoDisponibleEnCarta() {
-        CrearPlatoRequest request = new CrearPlatoRequest("Curry", "Curry de verduras", new BigDecimal("12.00"), Categoria.PRINCIPALES);
+        CrearPlatoRequest request = new CrearPlatoRequest("Curry", "Curry de verduras", new BigDecimal("12.00"),
+                Categoria.PRINCIPALES);
 
         PlatoDto resultado = platoService.anadirPlatoALaCarta(request);
 
-        // Enviamos los cambios a PostgreSQL y vaciamos la caché de JPA para leer de la base de datos.
+        // Enviamos los cambios a PostgreSQL y vaciamos la caché de JPA para leer de la
+        // base de datos.
         platoRepository.flush();
         entityManager.clear();
         assertThat(resultado.idPlato()).isNotNull();
