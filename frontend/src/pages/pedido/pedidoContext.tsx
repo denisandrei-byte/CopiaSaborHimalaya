@@ -11,6 +11,9 @@ import {
 import type { Plato } from "../../api/menus.ts";
 import type { EleccionesMenu, PedidoRequest } from "../../api/pedidos";
 
+// El backend cobra todos los menús a 15 € (LineaPedidoService y PedidoService)
+export const PRECIO_MENU = 15;
+
 export interface LineaPlato {
   idPlato: number;
   nombre: string;
@@ -20,7 +23,6 @@ export interface LineaPlato {
 
 export interface LineaMenu {
   idLocal: number; // identifica la línea en pantalla (dos menús con elecciones distintas = dos líneas)
-  idMenu: number;
   precio: number;
   elecciones: EleccionesMenu;
   detalle: string[]; // nombres de los 4 platos elegidos, en orden, solo para mostrarlos
@@ -33,11 +35,7 @@ interface PedidoContexto {
   numElementos: number;
   total: number;
   anadirPlato: (plato: Pick<Plato, "idPlato" | "nombre" | "precio">) => void;
-  anadirMenu: (
-    menu: { fechaMenu: string; precio: number },
-    elecciones: EleccionesMenu,
-    detalle: string[],
-  ) => void;
+  anadirMenu: (elecciones: EleccionesMenu, detalle: string[]) => void;
   cambiarCantidadPlato: (idPlato: number, delta: number) => void;
   cambiarCantidadMenu: (idLocal: number, delta: number) => void;
   vaciar: () => void;
@@ -70,17 +68,12 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
           ],
     );
 
-  const anadirMenu: PedidoContexto["anadirMenu"] = (
-    menu,
-    elecciones,
-    detalle,
-  ) =>
+  const anadirMenu: PedidoContexto["anadirMenu"] = (elecciones, detalle) =>
     setMenus((prev) => [
       ...prev,
       {
         idLocal: siguienteId.current++,
-        fechaMenu: menu.fechaMenu,
-        precio: menu.precio,
+        precio: PRECIO_MENU,
         elecciones,
         detalle,
         cantidad: 1,
@@ -119,7 +112,6 @@ export function PedidoProvider({ children }: { children: ReactNode }) {
   const aRequest = (): PedidoRequest => ({
     platos: platos.map((l) => ({ idPlato: l.idPlato, cantidad: l.cantidad })),
     menus: menus.map((l) => ({
-      idMenu: l.idMenu,
       elecciones: l.elecciones,
       cantidad: l.cantidad,
     })),

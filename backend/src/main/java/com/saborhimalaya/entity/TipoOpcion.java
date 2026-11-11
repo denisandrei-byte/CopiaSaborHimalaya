@@ -2,13 +2,14 @@ package com.saborhimalaya.entity;
 
 import java.util.Locale;
 
+import org.springframework.security.web.csrf.CsrfToken;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 // Tipos de opción del menú diario (US12, US13). En la BD se guarda la constante (ENTRANTE...),
 // como exige el CHECK de opcion_menu; en la API se usa el nombre ("Entrante"...).
 public enum TipoOpcion {
-
     ENTRANTE("Entrante"),
     PRINCIPAL("Principal"),
     POSTRE("Postre");
@@ -24,7 +25,8 @@ public enum TipoOpcion {
         return nombre;
     }
 
-    // Acepta el nombre ("Entrante") o la constante ("ENTRANTE"), sin distinguir mayúsculas
+    // Acepta el nombre ("Entrante") o la constante ("ENTRANTE"), sin distinguir
+    // mayúsculas
     @JsonCreator
     public static TipoOpcion desde(String valor) {
         if (valor != null) {

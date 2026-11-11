@@ -1,10 +1,10 @@
 // Pantalla de selección del pedido: "Lo que has elegido" + "Tu selección" (US3)
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { obtenerMenuDelDia } from "../../api/menus.ts";
-import type { MenuDelDia, Plato } from "../../api/menus.ts";
+import { obtenerPlatosParaMenu } from "../../api/menus.ts";
+import type { Plato } from "../../api/menus.ts";
 import { obtenerPlatosCarta } from "../../api/platos";
 import type { EleccionesMenu, TipoEleccion } from "../../api/pedidos";
-import { usePedido } from "./pedidoContext";
+import { PRECIO_MENU, usePedido } from "./pedidoContext";
 import { euros, textoError } from "./formato";
 import "./pedido.css";
 
@@ -23,24 +23,38 @@ interface Props {
 
 export default function ConfigurarPedido({ onIrACarta, onRevisar }: Props) {
   const pedido = usePedido();
-  const [menuDia, setMenuDia] = useState<MenuDelDia | null>(null);
-  const [bebidas, setBebidas] = useState<Plato[]>([]);
+  // Platos entre los que se puede elegir en cada hueco del menú
+  const [opciones, setOpciones] = useState<Record<TipoEleccion, Plato[]> | null>(
+    null,
+  );
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
 
   useEffect(() => {
     let activo = true;
-    Promise.all([obtenerMenuDelDia(), obtenerPlatosCarta()])
-      .then(([menu, carta]) => {
+    // No existe un endpoint con el menú configurado para hoy, así que se ofrecen los platos
+    // admitidos para cada tipo (GET /api/menus/platos) y las bebidas de la carta. El backend
+    // comprueba al crear el pedido que cada plato pertenece al menú de hoy.
+    Promise.all([
+      obtenerPlatosParaMenu("Entrante"),
+      obtenerPlatosParaMenu("Principal"),
+      obtenerPlatosParaMenu("Postre"),
+      obtenerPlatosCarta(),
+    ])
+      .then(([entrantes, principales, postres, carta]) => {
         if (!activo) return;
-        setMenuDia(menu);
-        setBebidas(carta.filter((plato) => plato.categoria === "Bebidas"));
+        setOpciones({
+          Entrante: entrantes,
+          Principal: principales,
+          Postre: postres,
+          Bebida: carta.filter((plato) => plato.categoria === "Bebidas"),
+        });
       })
       .catch(
         (e) =>
           activo &&
-          setError(textoError(e, "No se pudo cargar el menú del día.")),
+          setError(textoError(e, "No se pudieron cargar los platos del menú.")),
       )
       .finally(() => activo && setCargando(false));
     return () => {
@@ -49,7 +63,6 @@ export default function ConfigurarPedido({ onIrACarta, onRevisar }: Props) {
   }, []);
 
   const vacio = pedido.numElementos === 0;
-  const sinMenu = !cargando && !error && menuDia === null;
 
   return (
     <main className="page-content">
@@ -149,19 +162,14 @@ export default function ConfigurarPedido({ onIrACarta, onRevisar }: Props) {
             </button>
             <button
               className="secondary-button"
-              disabled={cargando || !!error || sinMenu}
+              disabled={cargando || !!error || opciones === null}
               onClick={() => setDialogoAbierto(true)}
             >
               Añadir menú
             </button>
           </div>
           {cargando && (
-            <p className="pedido-mensaje">Cargando el menú del día...</p>
-          )}
-          {sinMenu && (
-            <p className="pedido-mensaje">
-              Hoy no hay menú del día configurado.
-            </p>
+            <p className="pedido-mensaje">Cargando los platos del menú...</p>
           )}
           {error && <p className="pedido-mensaje error">{error}</p>}
         </section>
@@ -203,12 +211,11 @@ export default function ConfigurarPedido({ onIrACarta, onRevisar }: Props) {
         abierto={dialogoAbierto}
         onCerrar={() => setDialogoAbierto(false)}
       >
-        {menuDia && (
+        {opciones && (
           <FormularioMenu
-            menu={menuDia}
-            bebidas={bebidas}
+            opciones={opciones}
             onAnadir={(elecciones, detalle) => {
-              pedido.anadirMenu(menuDia, elecciones, detalle);
+              pedido.anadirMenu(elecciones, detalle);
               setDialogoAbierto(false);
             }}
             onCancelar={() => setDialogoAbierto(false)}
@@ -273,13 +280,11 @@ function Dialogo({
 
 /* ---------- Formulario: elegir las 4 opciones del menú del día ---------- */
 function FormularioMenu({
-  menu,
-  bebidas,
+  opciones,
   onAnadir,
   onCancelar,
 }: {
-  menu: MenuDelDia;
-  bebidas: Plato[];
+  opciones: Record<TipoEleccion, Plato[]>;
   onAnadir: (elecciones: EleccionesMenu, detalle: string[]) => void;
   onCancelar: () => void;
 }) {
@@ -287,13 +292,6 @@ function FormularioMenu({
     Partial<Record<TipoEleccion, number>>
   >({});
   const [error, setError] = useState("");
-
-  const opciones: Record<TipoEleccion, Plato[]> = {
-    Entrante: menu.entrantes,
-    Principal: menu.principales,
-    Postre: menu.postres,
-    Bebida: bebidas,
-  };
 
   function anadir() {
     const elecciones = {} as EleccionesMenu;
@@ -315,7 +313,10 @@ function FormularioMenu({
   return (
     <div>
       <h2>Menú del día</h2>
-      <p>{euros(menu.precio)} · entrante, principal, postre y bebida</p>
+      <p>
+        {euros(PRECIO_MENU)} · entrante, principal, postre y bebida. Se pide para
+        hoy y solo admite los platos configurados en el menú de hoy.
+      </p>
 
       {GRUPOS.map(({ tipo }) => (
         <label key={tipo}>

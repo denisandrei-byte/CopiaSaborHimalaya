@@ -28,7 +28,7 @@ public class EleccionMenuService {
         @Transactional
         public void AnadirOpcionesMenu(LineaPedido nuevLineaPedido, MenuPedido menuPedido) {
                 if (!menuPedido.getElecciones().sonValidasLasElecciones())
-                        throw new PedidoInvalidoException();
+                        throw new PedidoInvalidoException("Alguna eleccion del menú es invalida");
                 EleccionMenuCustom eleccion1 = menuPedido.getElecciones().getEleccionMenu1();
                 EleccionMenuCustom eleccion2 = menuPedido.getElecciones().getEleccionMenu2();
                 EleccionMenuCustom eleccion3 = menuPedido.getElecciones().getEleccionMenu3();
@@ -47,7 +47,7 @@ public class EleccionMenuService {
                         OpcionMenu opcionMenu = opcionMenuRepository
                                         .findByMenuAndPlato(lineaPedido.getMenu(), platoMenu)
                                         .orElseThrow(() -> new PedidoInvalidoException(
-                                                        "Porque no existe algun plato elegido en el menú"));
+                                                        "No existe algun plato elegido en el menú"));
 
                         if (!eleccion.getOpcion().toLowerCase()
                                         .equals(opcionMenu.getTipoOpcion().getNombre().toLowerCase()))
@@ -56,7 +56,7 @@ public class EleccionMenuService {
                 } else {
                         if (!eleccion.compararEntrePlatoYEleccion(platoMenu.getCategoria()) || !platoMenu.isEnCarta())
                                 throw new PedidoInvalidoException(
-                                                "porque " + eleccion.getIdPlato()
+                                                "porque " + platoMenu.getNombre()
                                                                 + " no es una bebida o no esta en la carta");
                 }
 

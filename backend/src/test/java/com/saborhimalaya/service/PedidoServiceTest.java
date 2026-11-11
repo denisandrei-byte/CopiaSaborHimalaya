@@ -126,6 +126,17 @@ class PedidoServiceTest extends BasePedidoTest {
         }
 
         @Test
+        void menuNoConfiguradoHoy_seRechazaYNoGuardaNada() {
+                opcionMenuRepository.deleteAll();
+                menuRepository.deleteAll(); // hoy ya no hay menú
+                PedidoRequest request = pedido(null, Arrays.asList(menuPedido(eleccionesValidas(), 1)));
+
+                assertThatThrownBy(() -> pedidoService.AnadirPedido(request, LOGIN))
+                                .isInstanceOf(MenuNoConfiguradoException.class);
+                assertNadaGuardado();
+        }
+
+        @Test
         void eleccionQueNoEsOpcionDelMenu_seRechaza() {
                 // curry existe y esta en la carta, pero no es una de las opciones de principal
                 // del menu

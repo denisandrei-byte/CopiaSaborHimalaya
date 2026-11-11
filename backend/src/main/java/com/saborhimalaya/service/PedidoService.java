@@ -82,6 +82,8 @@ public class PedidoService {
                 if (platoPedidos != null) {
                         for (PlatoPedido plato : platoPedidos) {
                                 Integer cantidad = plato.getCantidad();
+                                if (cantidad <= 0)
+                                        throw new PedidoInvalidoException();
                                 Plato pl = platoRepository.findById(plato.getIdPlato())
                                                 .orElseThrow(() -> new PlatoNoEncontradoException(plato.getIdPlato()));
                                 importDecimal = importDecimal
@@ -90,6 +92,9 @@ public class PedidoService {
                 }
                 if (menuPedidos != null) {
                         for (MenuPedido men : menuPedidos) {
+                                Integer cantidad = men.getCantidad();
+                                if (cantidad <= 0)
+                                        throw new PedidoInvalidoException();
                                 importDecimal = importDecimal.add(
                                                 (new BigDecimal(15).multiply(BigDecimal.valueOf(men.getCantidad()))));
                         }

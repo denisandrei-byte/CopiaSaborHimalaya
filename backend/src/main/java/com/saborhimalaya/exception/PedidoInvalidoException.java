@@ -7,6 +7,6 @@ public class PedidoInvalidoException extends RuntimeException {
     }
 
     public PedidoInvalidoException(String message) {
-        super("La petición de creación de pedido es invalida. " + message);
+        super("La petición de creación de pedido es invalida. Razón: \"" + message + "\"");
     }
 }

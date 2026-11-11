@@ -3,6 +3,8 @@ package com.saborhimalaya.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.security.web.csrf.CsrfToken;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.persistence.Column;

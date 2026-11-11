@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +62,7 @@ abstract class BasePedidoTest {
         postgres.start();
     }
 
-    protected static final LocalDate FECHA_MENU = LocalDate.of(2026, 11, 10);
+    private final LocalDate FECHA_MENU = LocalDate.now(ZoneId.of("Europe/Madrid"));
     protected static final String LOGIN = "cliente";
 
     @Autowired

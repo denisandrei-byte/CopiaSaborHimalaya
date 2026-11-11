@@ -31,7 +31,7 @@ public class LineaPedidoService {
         @Transactional
         public void AnadirLineaPedidoMenu(MenuPedido menu, Pedido pedido) {
                 if (menu.getCantidad() == null || menu.getCantidad() <= 0)
-                        throw new PedidoInvalidoException("porque la cantidad de menus es invalida");
+                        throw new PedidoInvalidoException("La cantidad de menus es invalida");
                 BigDecimal importe = new BigDecimal(0);
                 Menu menuOr = menuRepository.findByFechaAndConfigurado(menu.getFechaMenu(), true)
                                 .orElseThrow(() -> new MenuNoConfiguradoException());
@@ -47,7 +47,7 @@ public class LineaPedidoService {
 
         public void AnadirLineaPedidoPlato(PlatoPedido platoPedido, Pedido pedido) {
                 if (platoPedido.getCantidad() == null || platoPedido.getCantidad() <= 0)
-                        throw new PedidoInvalidoException("porque la cantidad de platos es invalida");
+                        throw new PedidoInvalidoException("La cantidad de platos es invalida");
                 BigDecimal importe = new BigDecimal(0);
                 Plato platoOr;
                 LineaPedido nuevaLineaPedido = new LineaPedido(pedido,

@@ -2,6 +2,7 @@ package com.saborhimalaya.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,11 +21,10 @@ import jakarta.validation.constraints.Positive;
  * MenuPedido
  */
 @Data
-@NoArgsConstructor
 public class MenuPedido {
     @NotNull
     @JsonIgnore
-    private LocalDate fechaMenu;
+    private final LocalDate fechaMenu = LocalDate.now(ZoneId.of("Europe/Madrid"));
     @NotNull
     @Valid
     private EleccionesMenu elecciones;
@@ -33,10 +33,8 @@ public class MenuPedido {
     @Max(value = 10000)
     private Integer cantidad;
 
-    public MenuPedido(EleccionesMenu eleccionesMenu, Integer cantidad) {
-        LocalDate localDate = LocalDate.now();
-        fechaMenu = LocalDate.of(localDate.getYear(), localDate.getMonth(), localDate.getDayOfMonth());
-        this.elecciones = eleccionesMenu;
+    public MenuPedido(EleccionesMenu elecciones, Integer cantidad) {
+        this.elecciones = elecciones;
         this.cantidad = cantidad;
     }
 }

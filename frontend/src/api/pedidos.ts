@@ -32,8 +32,8 @@ export interface EleccionesMenu {
       eleccionMenu4 : EleccionMenuCustom
 }
 
+// La fecha del menú no se envía: MenuPedido la fija en el backend como el día de hoy
 export interface MenuPedido {
-    fechaMenu : string
     elecciones : EleccionesMenu
     cantidad : number
 }
@@ -43,11 +43,26 @@ export interface PedidoRequest {
     platos : PlatoPedido []
 }
 
+
 export async function CrearPedido(datos: PedidoRequest): Promise<void> {
+  const csrfResponse = await fetch('/api/auth/csrf', {
+    credentials: 'include',
+  });
+  
+  if (!csrfResponse.ok) {
+    throw new Error('No se pudo obtener el token de seguridad (CSRF).');
+  }
+
+  const csrf = csrfResponse.json();
+
   const respuesta = await fetch('/api/pedidos', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json'
+      [csrf.headerName]: csrf.token,
+     },
     body: JSON.stringify(datos),
+
   })
   if (!respuesta.ok) {
     throw new ErrorApi(respuesta.status, 'No se pudo crear el pedido', await leerDetalle(respuesta))
